@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  backend:
+    name: Backend (.NET)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore TicketFlow.slnx
+
+      - name: Format check
+        run: dotnet format TicketFlow.slnx --verify-no-changes
+
+      - name: Build
+        run: dotnet build TicketFlow.slnx --no-restore -c Release
+
+      - name: Unit tests
+        run: dotnet test TicketFlow.UnitTests/TicketFlow.UnitTests.csproj --no-build -c Release
+
+      # Testcontainers precisa do Docker; os runners hospedados do GitHub já
+      # trazem o daemon disponível, sem passo extra de setup.
+      - name: Integration tests
+        run: dotnet test TicketFlow.IntegrationTests/TicketFlow.IntegrationTests.csproj -c Release
+
+  # A pipeline do frontend (restore/lint/testes Angular) entra aqui quando o
+  # projeto ticketflow-web existir (Fase 7 do roadmap).
