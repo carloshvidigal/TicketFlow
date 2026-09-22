@@ -1,0 +1,41 @@
+# Build results
+bin/
+obj/
+out/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Rider / JetBrains
+.idea/
+
+# VS Code
+.vscode/
+
+# Test results
+[Tt]est[Rr]esult*/
+*.trx
+*.coverage
+*.coveragexml
+
+# Secrets / local config (nunca versionar)
+appsettings.Development.json
+appsettings.*.local.json
+.env
+.env.*
+!.env.example
+
+# Node / Angular (frontend futuro)
+node_modules/
+dist/
+.angular/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Misc
+*.log
+*.tmp

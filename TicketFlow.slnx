@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/Tests/">
+    <Project Path="TicketFlow.IntegrationTests/TicketFlow.IntegrationTests.csproj" Id="0464cd7f-f1da-4052-8d8f-6c35687b61bf" />
+    <Project Path="TicketFlow.UnitTests/TicketFlow.UnitTests.csproj" Id="4138d10e-28bb-4065-8bb1-d1421f5a6808" />
+  </Folder>
+  <Project Path="TicketFlow.Api/TicketFlow.Api.csproj" />
+  <Project Path="TicketFlow.Application/TicketFlow.Application.csproj" />
+  <Project Path="TicketFlow.Domain/TicketFlow.Domain.csproj" />
+  <Project Path="TicketFlow.Infrastructure/TicketFlow.Infrastructure.csproj" />
+</Solution>
