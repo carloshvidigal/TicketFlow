@@ -102,17 +102,27 @@ junto com os primeiros controllers (Fase 3 do roadmap).
 ## Decisões
 
 Decisões arquiteturais relevantes são registradas como Architecture Decision
-Records (ADRs) — a documentar em `docs/adr/` conforme forem tomadas.
+Records (ADRs) em [`docs/adr/`](docs/adr/README.md).
 
 ## Roadmap
 
 Ver documento de arquitetura do projeto para o roadmap técnico completo
-(Fases 1 a 10). Nesta fase (1 — Fundamentos), o que falta:
+(Fases 1 a 10).
 
+**Fase 1 — Fundamentos:** concluída.
 - [x] Solution .NET em camadas
-- [x] Domínio inicial (Event, Section, Ticket)
-- [x] PostgreSQL + Entity Framework Core + primeira migration
-- [x] Docker Compose (api + postgres)
+- [x] PostgreSQL + Entity Framework Core + migrations
+- [x] Docker Compose (api + postgres), com migrations aplicadas
+      automaticamente no boot em Development
 - [x] CI (build, format, testes)
-- [ ] Domínio de identidade, reservas, pedidos e pagamentos (Fases 2–6)
+
+**Modelagem de domínio** (adiantada em relação ao roadmap, antes de entrar
+fundo nas Fases 2–6): `Event`, `Section`, `Ticket`, `User`, `Reservation`,
+`Order`, `Payment` já existem com suas regras de ciclo de vida e cobertura de
+testes. Ainda faltam, por fase:
+
+- [ ] Autenticação, hashing de senha, autorização (Fase 2)
+- [ ] Endpoints da Api (Controllers) para eventos e setores (Fase 3)
+- [ ] Orquestração de reserva → pedido → pagamento na Application layer
+      (Fases 4–6)
 - [ ] Frontend Angular (Fase 7)
