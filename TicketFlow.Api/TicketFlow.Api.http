@@ -1,6 +1,39 @@
-@TicketFlow.Api_HostAddress = http://localhost:5141
+@TicketFlow.Api_HostAddress = http://localhost:8080
 
-GET {{TicketFlow.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### Registro de usuário (sempre cria um Customer)
+POST {{TicketFlow.Api_HostAddress}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "carlos@example.com",
+  "password": "uma-senha-forte-123"
+}
+
+### Login: devolve access token (15 min) e refresh token (7 dias)
+# @name login
+POST {{TicketFlow.Api_HostAddress}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "carlos@example.com",
+  "password": "uma-senha-forte-123"
+}
+
+### Refresh: troca o refresh token por um novo par (o antigo deixa de valer)
+# @name refresh
+POST {{TicketFlow.Api_HostAddress}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{login.response.body.$.refreshToken}}"
+}
+
+### Logout: revoga o refresh token
+POST {{TicketFlow.Api_HostAddress}}/auth/logout
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refresh.response.body.$.refreshToken}}"
+}
 
 ###

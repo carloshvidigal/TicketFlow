@@ -1,14 +1,39 @@
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using TicketFlow.Api.Contracts.Auth;
+using TicketFlow.Api.Errors;
+using TicketFlow.Application;
+using TicketFlow.Application.Auth;
+using TicketFlow.Infrastructure;
 using TicketFlow.Infrastructure.Database;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+        options.InvalidModelStateResponseFactory = InvalidModelStateResponse.Create);
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
+
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+    throw new InvalidOperationException(
+        "ConnectionStrings:DefaultConnection is not configured. " +
+        "Set it via environment variable (ConnectionStrings__DefaultConnection) or appsettings.Development.json.");
+
+// O segredo do JWT vem de variável de ambiente (Jwt__Secret) e é validado no
+// boot: sem ele (ou fraco demais), a Api nem sobe.
+builder.Services.AddOptions<JwtOptions>()
+    .Bind(builder.Configuration.GetSection(JwtOptions.SectionName))
+    .ValidateOnStart();
+
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(connectionString);
 
 var app = builder.Build();
 
@@ -24,6 +49,8 @@ if (app.Environment.IsDevelopment())
 
 // Configure the HTTP request pipeline.
 
+app.UseExceptionHandler();
+
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
@@ -31,3 +58,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Torna o Program acessível aos testes de integração (WebApplicationFactory).
+public partial class Program;
