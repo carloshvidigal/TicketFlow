@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TicketFlow.Domain.Auth;
 using TicketFlow.Domain.Events;
 using TicketFlow.Domain.Orders;
 using TicketFlow.Domain.Payments;
@@ -18,6 +19,7 @@ public class AppDbContext : DbContext
     public DbSet<Section> Sections => Set<Section>();
     public DbSet<Ticket> Tickets => Set<Ticket>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Reservation> Reservations => Set<Reservation>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<Payment> Payments => Set<Payment>();
