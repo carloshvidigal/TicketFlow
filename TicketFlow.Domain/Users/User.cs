@@ -26,10 +26,15 @@ public class User
             throw new DomainException("USER_PASSWORD_HASH_REQUIRED", "Password hash is required.");
 
         Id = Guid.NewGuid();
-        Email = email.Trim().ToLowerInvariant();
+        Email = NormalizeEmail(email);
         PasswordHash = passwordHash;
         Role = role;
     }
+
+    // Regra única de normalização, usada tanto ao criar o usuário quanto ao
+    // procurar e-mails já cadastrados — assim "A@x.com" e "a@x.com" são o
+    // mesmo e-mail em qualquer lugar do sistema.
+    public static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
 
     public void ChangePasswordHash(string passwordHash)
     {
