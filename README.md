@@ -35,8 +35,9 @@ Módulos de domínio adicionais (Auth, Users, Reservations, Orders, Payments,
 Notifications) vão existir como pastas dentro desses mesmos projetos, à
 medida que forem implementados — não como projetos próprios.
 
-Fluxo de dependências: `Api → Application → Domain`, com `Infrastructure`
-implementando o acesso a dados definido a partir do `Domain`.
+Fluxo de dependências: `Api → Application → Domain`. A `Application` define
+contratos (ex.: `IPasswordHasher`, `IUserRepository`) e a `Infrastructure`
+os implementa (Argon2, EF Core) — a `Api` só faz a composição.
 
 ## Stack
 
@@ -76,10 +77,14 @@ Pré-requisito: Docker.
 
 ```bash
 cp .env.example .env
+# preencha JWT_SECRET no .env com um valor aleatório (mínimo 32 bytes):
+openssl rand -base64 48
 docker compose up --build
 ```
 
-A API sobe em `http://localhost:8080` (porta configurável via `.env`).
+A API sobe em `http://localhost:8080` (porta configurável via `.env`). Sem um
+`JWT_SECRET` válido ela **não sobe**: o segredo que assina os tokens vem
+sempre de variável de ambiente e nunca é versionado.
 
 ## Como testar
 
@@ -96,8 +101,23 @@ dotnet format TicketFlow.slnx --verify-no-changes
 
 ## API
 
-Ainda não há endpoints publicados — a documentação OpenAPI será adicionada
-junto com os primeiros controllers (Fase 3 do roadmap).
+Endpoints disponíveis (exemplos em [`TicketFlow.Api.http`](TicketFlow.Api/TicketFlow.Api.http)):
+
+| Método | Rota | Descrição |
+|---|---|---|
+| `POST` | `/auth/register` | Cria um usuário `Customer` (`201`; `400` dados inválidos; `409` e-mail já cadastrado) |
+| `POST` | `/auth/login` | Devolve access token (JWT, 15 min) e refresh token (7 dias) (`200`; `401` credenciais inválidas) |
+| `POST` | `/auth/refresh` | Troca o refresh token por um novo par; o antigo deixa de valer (`200`; `401` token inválido, expirado ou já usado) |
+| `POST` | `/auth/logout` | Revoga o refresh token (`204`, sempre) |
+
+Todos os erros seguem o mesmo formato:
+
+```json
+{ "error": { "code": "EMAIL_ALREADY_REGISTERED", "message": "The email is already registered." } }
+```
+
+Erros de validação incluem também `details` com o campo de cada problema. A
+documentação OpenAPI será adicionada mais adiante (Fase 8 do roadmap).
 
 ## Decisões
 
@@ -121,7 +141,13 @@ fundo nas Fases 2–6): `Event`, `Section`, `Ticket`, `User`, `Reservation`,
 `Order`, `Payment` já existem com suas regras de ciclo de vida e cobertura de
 testes. Ainda faltam, por fase:
 
-- [ ] Autenticação, hashing de senha, autorização (Fase 2)
+- [x] Hash de senha (Argon2id), tratamento centralizado de erros e registro
+      de usuário (`POST /auth/register`) — Fase 2, etapas 1 e 2
+- [x] Login, JWT (access token de 15 min) e refresh token rotativo com
+      detecção de reuso (`/auth/login`, `/auth/refresh`, `/auth/logout`) —
+      Fase 2, etapa 3
+- [ ] Validação do JWT nas rotas, autorização por papel e `GET /me` —
+      Fase 2, etapa 4
 - [ ] Endpoints da Api (Controllers) para eventos e setores (Fase 3)
 - [ ] Orquestração de reserva → pedido → pagamento na Application layer
       (Fases 4–6)
