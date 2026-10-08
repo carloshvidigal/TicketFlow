@@ -1,0 +1,25 @@
+using Microsoft.Extensions.Logging;
+
+namespace TicketFlow.UnitTests.Support;
+
+public sealed record LogEntry(LogLevel Level, string Message, IReadOnlyDictionary<string, object?> State);
+
+// Logger que guarda o que recebeu, para os testes provarem o que foi registrado
+// (e o que NÃO pode aparecer num log, como e-mails).
+public sealed class CapturingLogger<T> : ILogger<T>
+{
+    public List<LogEntry> Entries { get; } = [];
+
+    public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+    public bool IsEnabled(LogLevel logLevel) => true;
+
+    public void Log<TState>(
+        LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+    {
+        var values = (state as IEnumerable<KeyValuePair<string, object?>>)?.ToDictionary(p => p.Key, p => p.Value)
+            ?? [];
+
+        Entries.Add(new LogEntry(logLevel, formatter(state, exception), values));
+    }
+}

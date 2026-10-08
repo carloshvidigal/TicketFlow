@@ -39,6 +39,31 @@ public class SectionTests
     }
 
     [Fact]
+    public void Constructor_WithCapacityAboveTheMaximum_ThrowsDomainException()
+    {
+        var ex = Assert.Throws<DomainException>(() =>
+            new Section(Guid.NewGuid(), "Pista", Section.MaxCapacity + 1, price: 50m));
+
+        Assert.Equal("SECTION_CAPACITY_INVALID", ex.Code);
+    }
+
+    [Fact]
+    public void Constructor_WithCapacityExactlyAtTheMaximum_Works()
+    {
+        var section = new Section(Guid.NewGuid(), "Pista", Section.MaxCapacity, price: 50m);
+
+        Assert.Equal(Section.MaxCapacity, section.Capacity);
+    }
+
+    [Fact]
+    public void Constructor_TrimsTheName()
+    {
+        var section = new Section(Guid.NewGuid(), "  Pista  ", capacity: 10, price: 50m);
+
+        Assert.Equal("Pista", section.Name);
+    }
+
+    [Fact]
     public void GenerateTickets_CreatesOneAvailableTicketPerUnitOfCapacity()
     {
         var section = new Section(Guid.NewGuid(), "VIP", capacity: 3, price: 350m);

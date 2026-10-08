@@ -44,6 +44,17 @@ public sealed class InMemoryUserRepository : IUserRepository
     public Task<User?> FindByIdAsync(Guid id, CancellationToken cancellationToken) =>
         Task.FromResult(Saved.SingleOrDefault(u => u.Id == id));
 
+    public Task<User?> FindByIdForUpdateAsync(Guid id, CancellationToken cancellationToken) =>
+        Task.FromResult(Saved.SingleOrDefault(u => u.Id == id));
+
+    public int SaveChangesCalls { get; private set; }
+
+    public Task SaveChangesAsync(CancellationToken cancellationToken)
+    {
+        SaveChangesCalls++;
+        return Task.CompletedTask;
+    }
+
     public Task AddAsync(User user, CancellationToken cancellationToken)
     {
         Saved.Add(user);
