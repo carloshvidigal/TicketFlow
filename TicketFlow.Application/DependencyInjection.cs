@@ -1,6 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using TicketFlow.Application.Auth;
+using TicketFlow.Application.Events;
+using TicketFlow.Application.Users;
 
 namespace TicketFlow.Application;
 
@@ -16,6 +18,15 @@ public static class DependencyInjection
         services.AddScoped<LoginHandler>();
         services.AddScoped<RefreshTokenHandler>();
         services.AddScoped<LogoutHandler>();
+        services.AddScoped<GetCurrentUserHandler>();
+        services.AddScoped<ChangeUserRoleHandler>();
+        services.AddScoped<FindUserByEmailHandler>();
+
+        services.AddScoped<CreateEventHandler>();
+        services.AddScoped<UpdateEventHandler>();
+        services.AddScoped<EventLifecycleHandler>();
+        services.AddScoped<AddSectionHandler>();
+        services.AddScoped<EventQueries>();
 
         return services;
     }
