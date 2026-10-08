@@ -1,7 +1,11 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
+using TicketFlow.Api.Authentication;
 using TicketFlow.Api.Contracts.Auth;
 using TicketFlow.Api.Errors;
+using TicketFlow.Api.OpenApi;
+using TicketFlow.Api.RateLimiting;
 using TicketFlow.Application;
 using TicketFlow.Application.Auth;
 using TicketFlow.Infrastructure;
@@ -32,6 +36,11 @@ builder.Services.AddOptions<JwtOptions>()
     .Bind(builder.Configuration.GetSection(JwtOptions.SectionName))
     .ValidateOnStart();
 
+builder.Services.AddJwtAuthentication();
+builder.Services.AddAuthorizationPolicies();
+builder.Services.AddApiRateLimiting(builder.Configuration);
+builder.Services.AddApiOpenApi();
+
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(connectionString);
 
@@ -45,6 +54,10 @@ if (app.Environment.IsDevelopment())
     using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     dbContext.Database.Migrate();
+
+    // Documentação interativa da Api, só em desenvolvimento.
+    app.MapOpenApi().AllowAnonymous();
+    app.MapScalarApiReference().AllowAnonymous();
 }
 
 // Configure the HTTP request pipeline.
@@ -53,6 +66,11 @@ app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
 
+app.UseRateLimiter();
+
+// A ordem importa: primeiro descobrir quem é o usuário (autenticação), depois
+// decidir o que ele pode fazer (autorização).
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

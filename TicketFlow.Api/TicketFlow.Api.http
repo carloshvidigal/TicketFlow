@@ -1,11 +1,16 @@
 @TicketFlow.Api_HostAddress = http://localhost:8080
 
+# Dica: com a Api rodando em Development, a documentação interativa fica em
+# {{TicketFlow.Api_HostAddress}}/scalar (use o botão Authorize com o accessToken).
+
+### ---------------- Autenticação ----------------
+
 ### Registro de usuário (sempre cria um Customer)
 POST {{TicketFlow.Api_HostAddress}}/auth/register
 Content-Type: application/json
 
 {
-  "email": "carlos@example.com",
+  "email": "organizador@example.com",
   "password": "uma-senha-forte-123"
 }
 
@@ -15,7 +20,7 @@ POST {{TicketFlow.Api_HostAddress}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "carlos@example.com",
+  "email": "organizador@example.com",
   "password": "uma-senha-forte-123"
 }
 
@@ -35,5 +40,70 @@ Content-Type: application/json
 {
   "refreshToken": "{{refresh.response.body.$.refreshToken}}"
 }
+
+### Quem sou eu (precisa de token)
+GET {{TicketFlow.Api_HostAddress}}/me
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+### ---------------- Papéis (só Admin) ----------------
+# O cadastro público só gera Customer. O PRIMEIRO Admin é criado uma vez no banco
+# (registre o usuário acima e rode o SQL abaixo; depois faça login de novo):
+#   UPDATE users SET "Role" = 'Admin' WHERE "Email" = 'admin@example.com';
+# A partir daí, o Admin promove os demais pela API. Use o token do ADMIN nas duas chamadas:
+
+### Achar o usuário pelo e-mail exato (devolve o id)
+# @name findUser
+GET {{TicketFlow.Api_HostAddress}}/users?email=organizador@example.com
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+### Mudar o papel entre Customer e Organizer (Admin não se concede pela API)
+PUT {{TicketFlow.Api_HostAddress}}/users/{{findUser.response.body.$.id}}/role
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "role": "Organizer"
+}
+
+### ---------------- Eventos ----------------
+# Criar eventos exige papel Organizer ou Admin. O promovido precisa renovar o token
+# (POST /auth/refresh ou novo login) para o papel novo aparecer.
+
+### Listagem pública (paginada, só eventos publicados que ainda vão acontecer)
+GET {{TicketFlow.Api_HostAddress}}/events?page=1&pageSize=20
+
+### Criar evento (rascunho)
+# @name createEvent
+POST {{TicketFlow.Api_HostAddress}}/events
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Rock Festival 2027",
+  "location": "Arena XYZ, São Paulo",
+  "date": "2027-05-20T21:00:00-03:00"
+}
+
+### Adicionar setor (gera um ingresso por unidade de capacidade; só em rascunho)
+POST {{TicketFlow.Api_HostAddress}}/events/{{createEvent.response.body.$.id}}/sections
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Pista",
+  "capacity": 1000,
+  "price": 150.00
+}
+
+### Publicar (precisa de ao menos um setor)
+POST {{TicketFlow.Api_HostAddress}}/events/{{createEvent.response.body.$.id}}/publish
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+### Detalhe público, com a disponibilidade de cada setor
+GET {{TicketFlow.Api_HostAddress}}/events/{{createEvent.response.body.$.id}}
+
+### Encerrar as vendas
+POST {{TicketFlow.Api_HostAddress}}/events/{{createEvent.response.body.$.id}}/close
+Authorization: Bearer {{login.response.body.$.accessToken}}
 
 ###
