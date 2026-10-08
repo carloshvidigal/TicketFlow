@@ -33,6 +33,14 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
                 StatusCodes.Status401Unauthorized,
                 new ErrorBody(ex.Code, ex.Message)),
 
+            ForbiddenException ex => (
+                StatusCodes.Status403Forbidden,
+                new ErrorBody(ex.Code, ex.Message)),
+
+            NotFoundException ex => (
+                StatusCodes.Status404NotFound,
+                new ErrorBody(ex.Code, ex.Message)),
+
             ConflictException ex => (
                 StatusCodes.Status409Conflict,
                 new ErrorBody(ex.Code, ex.Message)),
