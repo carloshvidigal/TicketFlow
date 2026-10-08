@@ -20,6 +20,12 @@ public class UserRepository(AppDbContext dbContext) : IUserRepository
     public Task<User?> FindByIdAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.Users.AsNoTracking().SingleOrDefaultAsync(u => u.Id == id, cancellationToken);
 
+    public Task<User?> FindByIdForUpdateAsync(Guid id, CancellationToken cancellationToken) =>
+        dbContext.Users.SingleOrDefaultAsync(u => u.Id == id, cancellationToken);
+
+    public Task SaveChangesAsync(CancellationToken cancellationToken) =>
+        dbContext.SaveChangesAsync(cancellationToken);
+
     public async Task AddAsync(User user, CancellationToken cancellationToken)
     {
         dbContext.Users.Add(user);
