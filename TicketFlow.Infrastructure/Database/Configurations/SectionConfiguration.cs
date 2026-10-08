@@ -24,7 +24,10 @@ public class SectionConfiguration : IEntityTypeConfiguration<Section>
             .HasPrecision(10, 2)
             .IsRequired();
 
-        builder.HasIndex(s => s.EventId);
+        // Um nome de setor por evento. Também serve às consultas por EventId.
+        // (A checagem sem diferenciar maiúsculas/minúsculas acontece dentro da
+        // transação de criação do setor; este índice é a última barreira.)
+        builder.HasIndex(s => new { s.EventId, s.Name }).IsUnique();
 
         builder.HasMany<Ticket>()
             .WithOne()
