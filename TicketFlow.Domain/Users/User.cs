@@ -43,4 +43,14 @@ public class User
 
         PasswordHash = passwordHash;
     }
+
+    // Quem pode mudar o papel de quem é regra da Application (só Admin, e só
+    // entre Customer e Organizer); aqui fica apenas a garantia de que o valor é um papel real.
+    public void ChangeRole(UserRole role)
+    {
+        if (!Enum.IsDefined(role))
+            throw new DomainException("USER_ROLE_INVALID", "Role is invalid.");
+
+        Role = role;
+    }
 }
