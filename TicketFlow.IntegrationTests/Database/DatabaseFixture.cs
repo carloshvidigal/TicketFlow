@@ -19,14 +19,20 @@ public class DatabaseFixture : IAsyncLifetime
         .Build();
 
     public const string TestJwtSecret = "segredo-de-teste-de-integracao-com-mais-de-32-bytes";
+    public const string TestIssuer = "TicketFlow";
+    public const string TestAudience = "TicketFlow";
 
     private ApiFactory? _apiFactory;
 
     public HttpClient CreateApiClient() => _apiFactory!.CreateClient();
 
+    public IServiceProvider ApiServices => _apiFactory!.Services;
+
     // Para testes que precisam de uma Api com configuração diferente da padrão.
-    public WebApplicationFactory<Program> CreateApiFactory(string jwtSecret) =>
-        new ApiFactory(_container.GetConnectionString(), jwtSecret);
+    public WebApplicationFactory<Program> CreateApiFactory(
+        string jwtSecret = TestJwtSecret,
+        IReadOnlyDictionary<string, string>? settings = null) =>
+        new ApiFactory(_container.GetConnectionString(), jwtSecret, settings);
 
     public async Task InitializeAsync()
     {
@@ -35,7 +41,7 @@ public class DatabaseFixture : IAsyncLifetime
         await using var context = CreateContext();
         await context.Database.MigrateAsync();
 
-        _apiFactory = new ApiFactory(_container.GetConnectionString(), TestJwtSecret);
+        _apiFactory = new ApiFactory(_container.GetConnectionString(), TestJwtSecret, settings: null);
     }
 
     public async Task DisposeAsync()
@@ -55,12 +61,22 @@ public class DatabaseFixture : IAsyncLifetime
         return new AppDbContext(options);
     }
 
-    private sealed class ApiFactory(string connectionString, string jwtSecret) : WebApplicationFactory<Program>
+    private sealed class ApiFactory(
+        string connectionString,
+        string jwtSecret,
+        IReadOnlyDictionary<string, string>? settings) : WebApplicationFactory<Program>
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseSetting("ConnectionStrings:DefaultConnection", connectionString);
             builder.UseSetting("Jwt:Secret", jwtSecret);
+
+            // Os testes compartilham um único IP (o do TestServer): o limite
+            // real de produção só é exercitado nos testes de rate limiting.
+            builder.UseSetting("RateLimiting:AuthPermitLimit", "100000");
+
+            foreach (var (key, value) in settings ?? new Dictionary<string, string>())
+                builder.UseSetting(key, value);
         }
     }
 }

@@ -98,6 +98,29 @@ public class RegisterEndpointTests(DatabaseFixture fixture)
             detail => detail.GetProperty("field").GetString() == expectedField);
     }
 
+    // A mensagem de um JSON inválido não pode vazar tipos nem posições internas.
+    [Theory]
+    [InlineData("{ \"email\": 123, \"password\": \"uma-senha-forte-123\" }", "email")]
+    [InlineData("{ \"email\": \"a@b.com\", \"password\": [1, 2] }", "password")]
+    [InlineData("{ \"email\": ", "")]
+    public async Task Register_WithTheWrongJsonShape_DoesNotLeakInternalDetails(string json, string expectedField)
+    {
+        var client = fixture.CreateApiClient();
+
+        var response = await client.PostAsync("/auth/register", new StringContent(json, System.Text.Encoding.UTF8, "application/json"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var raw = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("TicketFlow", raw);
+        Assert.DoesNotContain("System.", raw);
+        Assert.DoesNotContain("LineNumber", raw);
+        Assert.DoesNotContain("$.", raw);
+        var error = JsonDocument.Parse(raw).RootElement.GetProperty("error");
+        Assert.Equal("VALIDATION_ERROR", error.GetProperty("code").GetString());
+        if (expectedField != "")
+            Assert.Contains(error.GetProperty("details").EnumerateArray(), d => d.GetProperty("field").GetString() == expectedField);
+    }
+
     [Fact]
     public async Task Register_WithoutBody_ReturnsValidationErrorInTheStandardFormat()
     {
